@@ -1,12 +1,10 @@
 package server
 
 import (
-	"bytes"
 	"crypto/sha256"
 	"fmt"
 	"net"
 	"crypto/rand"
-	"strconv"
 	"time"
 	"unicode/utf8"
 )
@@ -88,23 +86,27 @@ func verifyWork(userName string, Ns []byte, Nc []byte, v[]byte, db Tree) bool {
 	return checkEq(hash[:],v)
 }
 
-func validHash(hash []byte, strength byte) bool{
-	binaryRep := convertToBinary(hash)
-	for i := 0; i < int(strength); i++ {
-		if binaryRep[i] != binaryRep[len(binaryRep)-1-i] {
-			return false
+func validHash(hash []byte, strength byte) bool {
+	var leftByte = 0
+	var rightByte = len(hash) - 1
+	var leftBit = byte(1 << 7)
+	var rightBit = byte(1)
+	for i:= byte(0); i < strength; i++ {
+		if i > 0 && i % 8 == 0 {
+			leftByte++
+			rightByte--
+			leftBit = 1 << 7
+			rightBit = 1
 		}
+		if (hash[leftByte] & leftBit == 0) != (hash[rightByte] & rightBit == 0) {
+			return false;
+		}
+		leftBit >>= 1
+		rightBit <<= 1
 	}
-	return true
+	return true;
 }
 
-func convertToBinary(hash []byte) string {
-	var buffer bytes.Buffer
-	for _, x := range(hash) {
-		buffer.WriteString(strconv.FormatUint(uint64(x), 2))
-	}
-	return buffer.String()
-}
 
 func checkEq(hash1 []byte, hash2 []byte ) bool {
 	if len(hash1) != len(hash2) {
