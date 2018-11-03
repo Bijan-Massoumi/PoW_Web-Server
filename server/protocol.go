@@ -56,7 +56,7 @@ func HandlePoWProtocol(conn net.Conn, db Tree) {
 		conn.Write([]byte{0})
 	}
 
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(3000 * time.Millisecond)
 	fmt.Println("closing connection")
 	conn.Close()
 }
