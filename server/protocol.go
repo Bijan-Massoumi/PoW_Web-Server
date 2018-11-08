@@ -61,32 +61,7 @@ func HandlePoWProtocol(conn net.Conn, db Tree) {
 	conn.Close()
 }
 
-
-//private methods-----------------
-
-func validUnicode(userName []byte) bool {
-	if userName[len(userName)-1] == byte(0) && utf8.RuneCount(userName) <= 17 {
-		return true
-	}
-	return false
-}
-
-func verifyWork(userName string, Ns []byte, Nc []byte, v[]byte, db Tree) bool {
-	//verify hash first
-	if !validHash(v,PowStrength) {
-		return false
-	}
-	node := db.Find(userName)
-	if node == nil {
-		return false
-	}
-	//verify the work
-	arrToHash := append(append(Ns,[]byte(userName + "\x00" + node.password + "\x00")...), Nc...)
-	hash := sha256.Sum256(arrToHash)
-	return checkEq(hash[:],v)
-}
-
-func validHash(hash []byte, strength byte) bool {
+func ValidHash(hash []byte, strength byte) bool {
 	var leftByte = 0
 	var rightByte = len(hash) - 1
 	var leftBit = byte(1 << 7)
@@ -106,6 +81,33 @@ func validHash(hash []byte, strength byte) bool {
 	}
 	return true;
 }
+
+
+//private methods-----------------
+
+func validUnicode(userName []byte) bool {
+	if userName[len(userName)-1] == byte(0) && utf8.RuneCount(userName) <= 17 {
+		return true
+	}
+	return false
+}
+
+func verifyWork(userName string, Ns []byte, Nc []byte, v[]byte, db Tree) bool {
+	//verify hash first
+	if !ValidHash(v,PowStrength) {
+		return false
+	}
+	node := db.Find(userName)
+	if node == nil {
+		return false
+	}
+	//verify the work
+	arrToHash := append(append(Ns,[]byte(userName + "\x00" + node.password + "\x00")...), Nc...)
+	hash := sha256.Sum256(arrToHash)
+	return checkEq(hash[:],v)
+}
+
+
 
 
 func checkEq(hash1 []byte, hash2 []byte ) bool {

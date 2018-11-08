@@ -11,6 +11,7 @@ import (
 	"os"
 	"strings"
 	"time"
+	"PoW_Web-Server/server"
 )
 
 const (
@@ -34,8 +35,9 @@ func main() {
 	//load the db textfile in for testing. Not all are valid
 	b, err := ioutil.ReadAll(file)
 	lines := strings.Split(string(b),"\n")
-	c := make(chan TestResult, 100)
 	numThreads := 100
+	c := make(chan TestResult, numThreads)
+
 	for i:=0; i < numThreads; i+= 1 {
 		//pick random user/pass pair
 		inputs := strings.Split(lines[rand.Intn(len(lines))]," ")
@@ -115,30 +117,10 @@ func proofOfWork(Ns []byte, strength byte, userName string,password string) ([]b
 
 		arrToHash := append(append(Ns,[]byte(userName + "\x00" + password + "\x00")...), Nc...)
 		hash := sha256.Sum256(arrToHash)
-		if validHash(hash[:], strength) {
+		if server.ValidHash(hash[:], strength) {
 			return Nc, hash[:]
 		}
 	}
 }
 
-func validHash(hash []byte, strength byte) bool {
-	var leftByte = 0
-	var rightByte = len(hash) - 1
-	var leftBit = byte(1 << 7)
-	var rightBit = byte(1)
-	for i:= byte(0); i < strength; i++ {
-		if i > 0 && i % 8 == 0 {
-			leftByte++
-			rightByte--
-			leftBit = 1 << 7
-			rightBit = 1
-		}
-		if (hash[leftByte] & leftBit == 0) != (hash[rightByte] & rightBit == 0) {
-			return false;
-		}
-		leftBit >>= 1
-		rightBit <<= 1
-	}
-	return true;
-}
 
